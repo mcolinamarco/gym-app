@@ -25,12 +25,14 @@ export default {
   load: 'Dumbbell in the right hand',
   create(rig, material) {
     const db = attachGrip(rig, makeDumbbell(material));
-    rig.apply({}, 0.55, GRIP);
-    const P = rig.skinned(); let my = 1e9; for (let i = 1; i < P.length; i += 3) my = Math.min(my, P[i]);
-    const ground = -my, fw = new THREE.Vector3();
+    const fw = new THREE.Vector3();
     // the stance foot stays where it is at the top of the rep
     const footAt = pose => { rig.root.position.set(0, 0, 0); rig.apply(pose, 0.55, GRIP); rig.bones[rig.bi.footL].getWorldPosition(fw); return fw.clone(); };
     const footRef = footAt(armsAt(0));
+    // the stance sole rests on the floor (lowest point of the left foot and toes at the top of the rep)
+    const P = rig.skinned(); let my = 1e9;
+    for (let i = 0; i < rig.d.nv; i++) if (/^(footL|toesL)$/.test(rig.names[rig.dom[i]])) my = Math.min(my, P[i * 3 + 1]);
+    const ground = -my;
     return {
       attached: [db], placed: [], dumbbells: { R: db }, ground, footRef,
       poseAt: t => armsAt(depthAt(t).p),

@@ -13,7 +13,7 @@ export function slrdl({ trunk, lean, shin, backKnee = 0.05, backHip = 0, arms = 
 }
 export const GRIP = { R: true };
 export const KEYS = {
-  start:  { trunk: 0.0, lean: 0.11, shin: 0.2, backHip: 0.12, backKnee: 0.45, freeFoot: 0.15, neck: 0, armOut: 0.1 },
+  start:  { trunk: 0.0, lean: 0.11, shin: 0.2, backHip: 0.12, backKnee: 0.66, freeFoot: 0.15, neck: 0, armOut: 0.1 },
   mid:    { trunk: 0.77, lean: 0.27, shin: 0.15, backKnee: 0.12, arms: 0.04, armOut: 0.11 },
   bottom: { trunk: 1.52, lean: 0.36, shin: 0.12, backKnee: 0.05, arms: 0.1, armOut: 0.03 },
 };

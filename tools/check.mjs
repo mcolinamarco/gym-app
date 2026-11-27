@@ -38,15 +38,20 @@ const EXTRA = {
     let z = 0; for (let i = 0; i < rig.d.nv; i++) z += P[i * 3 + 2] * W.wA[i];
     const v = new THREE.Vector3(); let dz = 0; for (const d of Object.values(inst.dumbbells)) { d.getWorldPosition(v); dz += v.z; }
     const com = (z + dz * W.wS * 0.15) / (W.wS * 1.3), rear = -0.86, front2 = 0.05;
-    let kmin = 1e9; for (let i = 0; i < rig.d.nv; i++) { const n = rig.names[rig.dom[i]]; if (n === 'shinR' || n === 'thighR') kmin = Math.min(kmin, P[i * 3 + 1]); }
-    return { problems: inBench, inBench, benchDepth, frontWeight: (com - rear) / (front2 - rear), rearKnee: kmin };
+    let kmin = 1e9, fs = 9, rs = 9; for (let i = 0; i < rig.d.nv; i++) { const n = rig.names[rig.dom[i]]; if (n === 'shinR' || n === 'thighR') kmin = Math.min(kmin, P[i * 3 + 1]);
+      if (n === 'footL' || n === 'toesL') fs = Math.min(fs, P[i * 3 + 1]); if (n === 'footR' || n === 'toesR') rs = Math.min(rs, P[i * 3 + 1]); }
+    const rearGap = rs - (by + BENCH.top);
+    // the front sole must touch the floor and the rear instep must rest on the pad (within 3 mm)
+    const floating = (Math.abs(fs) > 0.002 ? 1 : 0) + (rearGap > 0.003 ? 1 : 0);
+    return { problems: inBench + floating, inBench, benchDepth, frontSole: fs, rearGap, frontWeight: (com - rear) / (front2 - rear), rearKnee: kmin };
   },
   'single-leg-rdl': (rig, inst, P, W) => {
     // balance: centre of mass over the stance mid-foot (6 cm ahead of the ankle), dumbbell 15% of body weight
     let z = 0; for (let i = 0; i < rig.d.nv; i++) z += P[i * 3 + 2] * W.wA[i];
     const v = new THREE.Vector3(); inst.dumbbells.R.getWorldPosition(v);
     const com = (z + v.z * W.wS * 0.15) / (W.wS * 1.15);
-    return { problems: 0, comErr: com - (inst.footRef.z + 0.06) };
+    let fs = 9; for (let i = 0; i < rig.d.nv; i++) if (/^(footL|toesL)$/.test(rig.names[rig.dom[i]])) fs = Math.min(fs, P[i * 3 + 1]);
+    return { problems: Math.abs(fs) > 0.002 ? 1 : 0, stanceSole: fs, comErr: com - (inst.footRef.z + 0.06) };
   },
   'pogo-hops': (rig, inst, P, W, t) => {
     const contact = (t % 0.4) < inst.contactTime; if (!contact) return { problems: 0 };
@@ -100,8 +105,9 @@ for (const entry of EXERCISES) {
   if (inst.dumbbells) line.push(`body inside dumbbells ${dbIn}`, `dumbbell lowest ${dbFloor} cm above floor`);
   line.push(`lowest body point ${(floor * 1000).toFixed(1)} mm`);
   if (kind === 'split-squat') { const fw = S.map(s => s.frontWeight), bi = S.reduce((a, s) => a + s.inBench, 0), bt = Math.round((ex.tempo[0][1] + ex.tempo[1][1]) / ex.length * N);
-    line.push(`inside bench ${bi} (deepest ${(Math.max(...S.map(s => s.benchDepth)) * 1000).toFixed(1)} mm)`, `front-foot weight top ${(fw[0] * 100).toFixed(0)}%, bottom ${(fw[bt] * 100).toFixed(0)}%`, `rear knee lowest ${cm(Math.min(...S.map(s => s.rearKnee)))} above floor`); }
-  if (kind === 'single-leg-rdl') { const e = S.map(s => Math.abs(s.comErr)); line.push(`centre of mass within ${cm(Math.max(...e))} of mid-foot`); }
+    line.push(`inside bench ${bi} (deepest ${(Math.max(...S.map(s => s.benchDepth)) * 1000).toFixed(1)} mm)`, `front-foot weight top ${(fw[0] * 100).toFixed(0)}%, bottom ${(fw[bt] * 100).toFixed(0)}%`, `rear knee lowest ${cm(Math.min(...S.map(s => s.rearKnee)))} above floor`,
+      `front sole ${(Math.min(...S.map(s => s.frontSole)) * 1000).toFixed(1)} to ${(Math.max(...S.map(s => s.frontSole)) * 1000).toFixed(1)} mm off the floor`, `rear instep ${(Math.min(...S.map(s => s.rearGap)) * 1000).toFixed(1)} to ${(Math.max(...S.map(s => s.rearGap)) * 1000).toFixed(1)} mm above the pad`); }
+  if (kind === 'single-leg-rdl') { const e = S.map(s => Math.abs(s.comErr)); line.push(`centre of mass within ${cm(Math.max(...e))} of mid-foot`, `stance sole ${(Math.max(...S.map(s => Math.abs(s.stanceSole))) * 1000).toFixed(1)} mm from the floor at most`); }
   if (kind === 'pogo-hops') { const c = S.filter(s => s.com !== undefined); line.push(`ground contact: centre of mass ${cm(Math.min(...c.map(s => s.com)))} to ${cm(Math.max(...c.map(s => s.com)))}, inside contact patch ${cm(Math.min(...c.map(s => s.patch[0])))} to ${cm(Math.max(...c.map(s => s.patch[1])))}`); }
   if (kind === 'seated-calf-raise') { const k = ['bar', 'handInShaft', 'plate', 'bench']; line.push(k.map(n => `${n} ${S.reduce((a, s) => a + s[n], 0)}`).join(', '), `closest body point to pad ${(Math.min(...S.map(s => s.padGap)) * 1000).toFixed(1)} mm`, `grip centre max ${cm(Math.max(...S.map(s => s.gripOff)))} off the bar axis`, 'balance: seated, n/a'); }
   console.log(line.join(' | ')); if (bad) failed++;
