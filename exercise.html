@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#262624">
+<title>Exercise</title>
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<style>
+:root{color-scheme:dark;--bg:#262624;--ink:#E8E6DC;--mute:#A6A39A;--line:#3B3A36;--panel:#2E2D2A;--or:#D97757}
+*{box-sizing:border-box;min-width:0}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;overflow:hidden}
+#c{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+.top{position:fixed;top:0;left:0;right:0;padding:14px 16px;pointer-events:none;display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.top h1{font-size:17px;font-weight:500;margin:0}
+.top p{margin:2px 0 0;font-size:13px;color:var(--mute)}
+.legend{font-size:13px;color:var(--mute);text-align:right;transition:opacity .3s}
+.legend div{display:flex;align-items:center;justify-content:flex-end;gap:6px;margin-top:3px}
+.legend i{width:10px;height:10px;border-radius:50%;background:var(--or);display:inline-block}
+.dock{position:fixed;left:50%;bottom:max(14px,env(safe-area-inset-bottom));transform:translateX(-50%);width:min(560px,calc(100% - 24px));background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px 12px;display:grid;gap:10px}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.seg{display:flex;flex:1 1 220px;background:var(--bg);border-radius:10px;padding:3px}
+.seg button{flex:1;min-height:38px;border:0;border-radius:8px;background:none;color:var(--mute);font:inherit;font-size:14px;cursor:pointer}
+.seg button[aria-pressed=true]{background:var(--line);color:var(--ink)}
+.tg{flex:1 1 90px;min-height:44px;border:1px solid var(--line);border-radius:10px;background:none;color:var(--mute);font:inherit;font-size:14px;cursor:pointer}
+.tg[aria-pressed=true]{color:var(--ink);border-color:#5a5852}
+button:focus-visible,input:focus-visible{outline:2px solid var(--or);outline-offset:2px}
+.sl{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--mute)}
+.sl input{flex:1;accent-color:var(--or);height:28px}
+.sl output{width:4.5ch;text-align:right;color:var(--ink)}
+.hint{position:fixed;left:0;right:0;text-align:center;font-size:12px;color:#77756e;pointer-events:none}
+#err{position:fixed;inset:0;display:none;place-items:center;padding:24px;text-align:center;color:var(--mute)}
+@media(max-width:600px){.legend{display:none}.top h1{font-size:16px}}
+.back{pointer-events:auto;display:inline-block;color:var(--mute);text-decoration:none;font-size:13px;margin-bottom:6px;padding:4px 0}
+.back:hover{color:var(--ink)}
+</style>
+<script type="importmap">{"imports":{"three":"./vendor/three/three.module.js","three/addons/":"./vendor/three/addons/"}}</script>
+</head>
+<body>
+<canvas id="c" aria-label="3D exercise figure. Drag to rotate, pinch or scroll to zoom."></canvas>
+<div class="top">
+  <div><a class="back" href="./">‹ All exercises</a><h1 id="name"></h1><p><span id="style"></span> · <span id="phase">Top</span></p></div>
+  <div class="legend" id="legend"></div>
+</div>
+<div class="dock">
+  <div class="row">
+    <button class="tg" id="play" aria-pressed="true" style="flex:0 0 96px">Pause</button>
+    <div class="seg" role="group" aria-label="Speed" id="speeds"></div>
+  </div>
+  <label class="sl" id="scrubLabel">Rep <input id="scrub" type="range" min="0" max="1000" step="1" value="0" aria-label="Scrub through the rep"><output id="tO">0.0s</output></label>
+  <div class="row">
+    <button class="tg" id="tMus" aria-pressed="true">Muscles</button>
+    <button class="tg" id="tPulse" aria-pressed="false">Pulse</button>
+    <button class="tg" id="tSkel" aria-pressed="false">Skeleton</button>
+    <button class="tg" id="tRot" aria-pressed="true">Auto-rotate</button>
+  </div>
+  <label class="sl">Shading <input id="amt" type="range" min="0" max="100" step="1" value="75"><output id="amtO">75</output></label>
+</div>
+<div id="err">The 3D view couldn't start in this browser.</div>
+<p class="hint" id="load" style="top:50%">Loading body…</p>
+<script type="module">
+import { EXERCISES } from './src/exercises/index.js';
+import { play } from './src/core/player.js';
+const id = new URLSearchParams(location.search).get('ex');
+const entry = EXERCISES.find(e => e.id === id);
+if (!entry) location.replace('./');
+else entry.load().then(m => play(m.default)).catch(e => { console.error(e); const l = document.getElementById('load'); if (l) l.textContent = "The body model couldn't load."; });
+</script>
+</body>
+</html>
