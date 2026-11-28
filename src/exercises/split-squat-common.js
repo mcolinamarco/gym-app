@@ -20,7 +20,7 @@ export function splitSquat({ id, style, note, table, weights }) {
       rig.apply({}, 0.55, GRIP);
       const P = rig.skinned(); let my = 1e9; for (let i = 1; i < P.length; i += 3) my = Math.min(my, P[i]);
       const ground = -my - table.ground;
-      const bench = makeBench(material, table.benchX, table.benchFront); bench.position.y = ground + table.ground;
+      const bench = makeBench(material, table.benchX, table.benchFront); bench.position.y = ground + table.ground + (table.benchShift || 0);
       const frameAt = t => { const d = repDepth(TEMPO, t); return { ...sampleRep(table.frames, d.p), phase: d.phase, p: d.p }; };
       return {
         attached: Object.values(dumbbells), placed: [bench], dumbbells, bench, ground,
