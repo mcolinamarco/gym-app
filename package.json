@@ -1,0 +1,13 @@
+{
+  "name": "gym-app",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "node tools/check.mjs",
+    "serve": "npx --yes serve@14.2.4 -l 5173 ."
+  },
+  "devDependencies": {
+    "three": "0.160.0",
+    "three-mesh-bvh": "0.7.8"
+  }
+}
